@@ -1,0 +1,97 @@
+<?php
+
+DW_Comments::init();
+
+class DW_Comments {
+
+  public static function init() {
+
+    add_shortcode( 'dwqa-post-comments', 'DW_Comments::post_questions' );
+  }
+
+  public static function prepare_archive_query( $qry ) {
+    if ( is_singular( apply_filters( 'dwqa_comments_post_types', [ 'post', 'page' ] ) ) ) {
+      $qry[ 'posts_per_page' ] = -1;
+      $qry[ 'meta_query' ] = [
+          [
+              'key' => '_dwqa_comments_post_id',
+              'value' => get_the_ID()
+          ]
+      ];
+    }
+    return $qry;
+  }
+
+  /**
+   * Adds the current post / page ID to the hidden fields so that it can
+   * be added to the question post meta later. 
+   */
+  public static function before_question_submit_button() {
+
+    if ( is_singular( apply_filters( 'dwqa_comments_post_types', [ 'post', 'page' ] ) ) ) {
+      echo '<input type="hidden" name="dwqa_comments_post_id" value="' . get_the_ID() . '">';
+    }
+  }
+
+  /**
+   * Adds the post ID that from where this question was submitted. 
+   * @param type $question
+   */
+  public static function after_insert_question( $question_id ) {
+    if ( isset( $_POST[ 'dwqa_comments_post_id' ] ) && ! empty( $question_id ) ) {
+      update_post_meta( $question_id, '_dwqa_comments_post_id', $_POST[ 'dwqa_comments_post_id' ] );
+    }
+  }
+
+  /**
+   * Shortcode handler
+   * 
+   * This turns off some of the actions that DW uses by default that don't 
+   * really make sense when using this for comments. 
+   * 
+   * @param type $atts
+   * @return type
+   */
+  public static function post_questions( $atts = [] ) {
+    $atts = shortcode_atts( [
+        'hide_options' => true,
+        'header_level' => 2
+            ], $atts );
+
+    add_action( 'dwqa_before_question_submit_button', 'DW_Comments::before_question_submit_button' );
+    add_action( 'dwqa_after_insert_question', 'DW_Comments::after_insert_question', 10, 2 );
+
+    add_filter( 'dwqa_prepare_archive_posts', 'DW_Comments::prepare_archive_query', 10, 2 );
+
+    remove_action( 'dwqa_before_questions_archive', 'dwqa_search_form', 11 );
+    remove_action( 'dwqa_before_questions_archive', 'dwqa_archive_question_filter_layout', 12 );
+
+    $html = do_shortcode( '[dwqa-list-questions]' );
+
+    $has_questions = true;
+    if ( strpos( $html, 'dwqa-question-title' ) === false ) {
+      /* There aren't any questions, don't hide the form */
+      $html = '';
+      $has_questions = false;
+    }
+    else {
+      $html = '<h' . $atts[ 'header_level' ] . '>' . __( 'Questions', 'dwqa-comments' ) . '</h' . $atts[ 'header_level' ] . '>' . $html;
+    }
+
+
+    $html .= '<div class="dwqa-question-form-wrapper" style="display:' . ($has_questions ? 'none' : '') . ';">';
+    $html .= '<h' . $atts[ 'header_level' ] . '>' . __( 'Ask a Question', 'dwqa-comments' ) . '</h' . $atts[ 'header_level' ] . '>';
+    $html .= do_shortcode( '[dwqa-submit-question-form]' );
+    $html .= '</div>';
+    /* Add CSS to hide the category, tags and privacy for the question */
+    if ( $atts[ 'hide_options' ] ) {
+      $html .= '<style type="text/css">input[name="question-tag"],select[name="question-status"],select[name="question-category"]{
+display: none !important;}label[for="question-tag"],label[for="question-status"],label[for="question-category"]{display:none !important;}</style>';
+    }
+    
+    $html .= '<script type="text/javascript">jQuery(".dwqa-ask-question a").click(function() { jQuery(".dwqa-question-form-wrapper").show(); return false;});</script>';
+
+    return $html;
+  }
+
+}
