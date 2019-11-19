@@ -7,17 +7,45 @@ class DW_Comments {
   public static function init() {
 
     add_shortcode( 'dwqa-post-comments', 'DW_Comments::post_questions' );
+
+    add_action( 'dwqa_after_show_content_question', 'DW_Comments::embed_parent', 10, 2 );
+
+    add_action( 'dwqa_before_question_submit_button', 'DW_Comments::before_question_submit_button' );
+    add_action( 'dwqa_after_insert_question', 'DW_Comments::after_insert_question', 10, 2 );
   }
 
+  /**
+   * Adds the referenced post as an oembed to the end of the question
+   * 
+   * @global type $wp_embed
+   * @param type $question_id
+   * @return type
+   */
+  public static function embed_parent( $question_id ) {
+    $post_parent_id = get_post_meta( $question_id, '_dwqa_comments_post_id', true );
+
+    if ( empty( $post_parent_id ) ) {
+      return;
+    }
+
+    global $wp_embed;
+    echo $wp_embed->run_shortcode( '[embed]' . get_the_permalink( $post_parent_id ) . '[/embed]' );
+  }
+
+  /**
+   * Updates the query when used on a singular page / post to include all
+   * questions and only those that are from that page / post. 
+   * 
+   * @param type $qry
+   * @return array
+   */
   public static function prepare_archive_query( $qry ) {
     if ( is_singular( apply_filters( 'dwqa_comments_post_types', [ 'post', 'page' ] ) ) ) {
       $qry[ 'posts_per_page' ] = -1;
-      $qry[ 'meta_query' ] = [
-          [
+      $qry[ 'meta_query' ] = [ [
               'key' => '_dwqa_comments_post_id',
               'value' => get_the_ID()
-          ]
-      ];
+          ] ];
     }
     return $qry;
   }
@@ -40,6 +68,11 @@ class DW_Comments {
   public static function after_insert_question( $question_id ) {
     if ( isset( $_POST[ 'dwqa_comments_post_id' ] ) && ! empty( $question_id ) ) {
       update_post_meta( $question_id, '_dwqa_comments_post_id', $_POST[ 'dwqa_comments_post_id' ] );
+
+      if ( function_exists( 'w3tc_flush_post' ) ) {
+        /* Need to clear W3TC cache so the question will show up */
+        w3tc_flush_post( $_POST[ 'dwqa_comments_post_id' ] );
+      }
     }
   }
 
@@ -58,8 +91,6 @@ class DW_Comments {
         'header_level' => 2
             ], $atts );
 
-    add_action( 'dwqa_before_question_submit_button', 'DW_Comments::before_question_submit_button' );
-    add_action( 'dwqa_after_insert_question', 'DW_Comments::after_insert_question', 10, 2 );
 
     add_filter( 'dwqa_prepare_archive_posts', 'DW_Comments::prepare_archive_query', 10, 2 );
 
@@ -88,7 +119,7 @@ class DW_Comments {
       $html .= '<style type="text/css">input[name="question-tag"],select[name="question-status"],select[name="question-category"]{
 display: none !important;}label[for="question-tag"],label[for="question-status"],label[for="question-category"]{display:none !important;}</style>';
     }
-    
+
     $html .= '<script type="text/javascript">jQuery(".dwqa-ask-question a").click(function() { jQuery(".dwqa-question-form-wrapper").show(); return false;});</script>';
 
     return $html;
