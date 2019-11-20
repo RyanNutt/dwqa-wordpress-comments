@@ -29,7 +29,7 @@ class DW_Comments {
     }
 
     global $wp_embed;
-    echo apply_filters( 'dwqa_comments_embedded_post', $wp_embed->run_shortcode( '[embed]' . get_the_permalink( $post_parent_id ) . '[/embed]' ) );
+    echo apply_filters( 'dwqa_comments_embedded_post', $wp_embed->run_shortcode( '[embed]' . get_the_permalink( $post_parent_id ) . '[/embed]' ), $question_id, $post_parent_id );
   }
 
   /**
