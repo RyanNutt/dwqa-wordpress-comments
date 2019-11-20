@@ -29,7 +29,7 @@ class DW_Comments {
     }
 
     global $wp_embed;
-    echo $wp_embed->run_shortcode( '[embed]' . get_the_permalink( $post_parent_id ) . '[/embed]' );
+    echo apply_filters( 'dwqa_comments_embedded_post', $wp_embed->run_shortcode( '[embed]' . get_the_permalink( $post_parent_id ) . '[/embed]' ) );
   }
 
   /**
