@@ -6,7 +6,7 @@ class DW_Comments {
 
   public static function init() {
 
-    add_shortcode( 'dwqa-post-comments', 'DW_Comments::post_questions' );
+    add_shortcode( 'dwqa_post_comments', 'DW_Comments::post_questions' );
 
     add_action( 'dwqa_after_show_content_question', 'DW_Comments::embed_parent', 10, 2 );
 
@@ -109,10 +109,11 @@ class DW_Comments {
       $html = '<h' . $atts[ 'header_level' ] . '>' . __( 'Questions', 'dwqa-comments' ) . '</h' . $atts[ 'header_level' ] . '>' . $html;
     }
 
+    $form = do_shortcode('[dwqa-submit-question-form]');
 
-    $html .= '<div class="dwqa-question-form-wrapper" style="display:' . ($has_questions ? 'none' : '') . ';">';
+    $html .= '<div class="dwqa-question-form-wrapper" style="display:' . ($has_questions  && strpos($form, 'alert-error') === false ? 'none' : '') . ';">';
     $html .= '<h' . $atts[ 'header_level' ] . '>' . __( 'Ask a Question', 'dwqa-comments' ) . '</h' . $atts[ 'header_level' ] . '>';
-    $html .= do_shortcode( '[dwqa-submit-question-form]' );
+    $html .= $form;
     $html .= '</div>';
     /* Add CSS to hide the category, tags and privacy for the question */
     if ( $atts[ 'hide_options' ] ) {
