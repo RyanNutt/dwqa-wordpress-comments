@@ -86,7 +86,12 @@ class DW_Comments {
   public static function post_questions( $atts = [] ) {
     $atts = shortcode_atts( [
         'hide_options' => true,
-        'header_level' => 2
+        'ask_title' => 'Ask Question',
+        'ask_before' => '<h2>',
+        'ask_after' => '</h2>',
+        'questions_title' => 'Questions',
+        'questions_before' => '<h2>',
+        'questions_after' => '</h2>'
             ], $atts );
 
     /* Add post id field to the hidden fields */
@@ -106,13 +111,13 @@ class DW_Comments {
       $has_questions = false;
     }
     else {
-      $html = '<h' . $atts[ 'header_level' ] . '>' . __( 'Questions', 'dwqa-comments' ) . '</h' . $atts[ 'header_level' ] . '>' . $html;
+      $html = $atts['questions_before'] . $atts['questions_title'] . $atts['questions_after'] . $html;
     }
 
     $form = do_shortcode( '[dwqa-submit-question-form]' );
 
     $html .= '<div class="dwqa-question-form-wrapper" style="display:' . ($has_questions && strpos( $form, 'alert-error' ) === false ? 'none' : '') . ';">';
-    $html .= '<h' . $atts[ 'header_level' ] . '>' . __( 'Ask a Question', 'dwqa-comments' ) . '</h' . $atts[ 'header_level' ] . '>';
+    $html .= $atts['ask_before'] . $atts['ask_title'] . $atts['ask_after'];
     $html .= $form;
     $html .= '</div>';
     /* Add CSS to hide the category, tags and privacy for the question */
