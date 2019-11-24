@@ -10,7 +10,6 @@ class DW_Comments {
 
     add_action( 'dwqa_after_show_content_question', 'DW_Comments::embed_parent', 10, 2 );
 
-    add_action( 'dwqa_before_question_submit_button', 'DW_Comments::before_question_submit_button' );
     add_action( 'dwqa_after_insert_question', 'DW_Comments::after_insert_question', 10, 2 );
   }
 
@@ -39,7 +38,7 @@ class DW_Comments {
    * @param type $qry
    * @return array
    */
-  public static function prepare_archive_query( $qry ) {
+  public static function prepare_archive_query( $qry ) { 
     if ( is_singular( apply_filters( 'dwqa_comments_post_types', [ 'post', 'page' ] ) ) ) {
       $qry[ 'posts_per_page' ] = -1;
       $qry[ 'meta_query' ] = [ [
@@ -55,7 +54,6 @@ class DW_Comments {
    * be added to the question post meta later. 
    */
   public static function before_question_submit_button() {
-
     if ( is_singular( apply_filters( 'dwqa_comments_post_types', [ 'post', 'page' ] ) ) ) {
       echo '<input type="hidden" name="dwqa_comments_post_id" value="' . get_the_ID() . '">';
     }
@@ -91,6 +89,8 @@ class DW_Comments {
         'header_level' => 2
             ], $atts );
 
+    /* Add post id field to the hidden fields */
+    add_action( 'dwqa_before_question_submit_button', 'DW_Comments::before_question_submit_button' );
 
     add_filter( 'dwqa_prepare_archive_posts', 'DW_Comments::prepare_archive_query', 10, 2 );
 
@@ -109,9 +109,9 @@ class DW_Comments {
       $html = '<h' . $atts[ 'header_level' ] . '>' . __( 'Questions', 'dwqa-comments' ) . '</h' . $atts[ 'header_level' ] . '>' . $html;
     }
 
-    $form = do_shortcode('[dwqa-submit-question-form]');
+    $form = do_shortcode( '[dwqa-submit-question-form]' );
 
-    $html .= '<div class="dwqa-question-form-wrapper" style="display:' . ($has_questions  && strpos($form, 'alert-error') === false ? 'none' : '') . ';">';
+    $html .= '<div class="dwqa-question-form-wrapper" style="display:' . ($has_questions && strpos( $form, 'alert-error' ) === false ? 'none' : '') . ';">';
     $html .= '<h' . $atts[ 'header_level' ] . '>' . __( 'Ask a Question', 'dwqa-comments' ) . '</h' . $atts[ 'header_level' ] . '>';
     $html .= $form;
     $html .= '</div>';
